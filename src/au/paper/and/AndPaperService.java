@@ -15,6 +15,9 @@ import android.service.wallpaper.WallpaperService;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import aurelienribon.tweenengine.Tween;
+import aurelienribon.tweenengine.TweenManager;
+import aurelienribon.tweenengine.equations.Bounce;
 
 public class AndPaperService extends  WallpaperService {
 
@@ -47,6 +50,8 @@ public class AndPaperService extends  WallpaperService {
         private float mCenterY;
         private final Bitmap bitmap;
         private final Matrix matrix = new Matrix();    
+        private Particle particle1 = new Particle();
+        private Particle particle2 = new Particle();
 		
         private final Runnable mDrawCube = new Runnable() {
             public void run() {
@@ -54,6 +59,7 @@ public class AndPaperService extends  WallpaperService {
             }
         };
         private boolean mVisible;
+		private TweenManager manager;
         
         CubeEngine() {
             // Create a Paint to draw the lines for our cube
@@ -66,6 +72,23 @@ public class AndPaperService extends  WallpaperService {
             bitmap =  BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
             mStartTime = SystemClock.elapsedRealtime();
             mOffset = 0;
+            Tween.registerAccessor(Particle.class, new ParticleAccessor());
+         // We need a manager to handle every tween.
+
+            manager = new TweenManager();
+
+            // We can now create as many interpolations as we need !
+
+            Tween.to(particle1, ParticleAccessor.POSITION_XY, 1.0f)
+                .target(100, 200)
+                .start(manager);
+                
+            Tween.to(particle2, ParticleAccessor.POSITION_XY, 0.5f)
+                .target(0, 0)
+                .ease(Bounce.OUT)
+                .delay(1.0f)
+                .repeatYoyo(2, 0.5f)
+                .start(manager);
         }
         
 		@Override
@@ -158,8 +181,19 @@ public class AndPaperService extends  WallpaperService {
                     // draw something
                     //drawCube(c);
                 	//drawRobot(c);
-                	drawRobot2(c);
+                    mOffset += 5 ;
+                    c.drawColor(0xff000000);  
+                	//drawRobot2(c);
+                	//drawRobot3(c);
+                	//drawRobot4(c);
+                	drawRobot5(c);
                     drawTouchPoint(c);
+                    
+                    if (mOffset > 25 * 5 * (mCenterX * 2 / 5) ) {
+                    	mOffset = 0;
+                    }
+                    long now = SystemClock.elapsedRealtime();
+                    manager.update((float)(now - mStartTime));
                 }
             } finally {
                 if (c != null) holder.unlockCanvasAndPost(c);
@@ -186,13 +220,40 @@ public class AndPaperService extends  WallpaperService {
         void drawRobot2(Canvas c) {
       	              
             long now = SystemClock.elapsedRealtime();
-            mPaint.setFilterBitmap(true);
-            c.drawColor(0xff000000);      
+            mPaint.setFilterBitmap(true);    
             matrix.reset();
             matrix.setRotate(10000/360 * ((float)(now - mStartTime)) / 1000, bitmap.getWidth()/2, bitmap.getHeight()/2);
             matrix.postTranslate((float) (500 * Math.sin(mOffset / 500)), (float) (Math.sin(mOffset / 20) * 10) + 150);
-            c.drawBitmap(bitmap, matrix, mPaint); 
-            mOffset += 5;
+            c.drawBitmap(bitmap, matrix, mPaint);
+            
+        }
+        
+        void drawRobot3(Canvas c) {
+              
+            long now = SystemClock.elapsedRealtime();
+            mPaint.setFilterBitmap(true);           
+            matrix.reset();
+            matrix.setRotate(45, bitmap.getWidth()/2, bitmap.getHeight()/2);
+            matrix.postTranslate((float) (500 * Math.sin(mOffset / 500)), mCenterY * 2 - mOffset);
+            c.drawBitmap(bitmap, matrix, mPaint);
+        }
+        
+        void drawRobot4(Canvas c) {
+            
+            long now = SystemClock.elapsedRealtime();
+            mPaint.setFilterBitmap(true);           
+            matrix.reset();
+            matrix.postTranslate((float) (500 * Math.sin(mOffset / 500)),  -300 + (float) (mCenterY * 2 + 40 * Math.abs(Math.sin(mOffset / 5))));
+            c.drawBitmap(bitmap, matrix, mPaint);
+        }
+        
+        void drawRobot5(Canvas c) {
+            
+            long now = SystemClock.elapsedRealtime();
+            mPaint.setFilterBitmap(true);           
+            matrix.reset();
+            matrix.postTranslate(particle1.getX(),particle1.getY());
+            c.drawBitmap(bitmap, matrix, mPaint);
         }
         
         /*
